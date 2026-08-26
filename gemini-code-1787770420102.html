@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Happy Teacher's Day</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #050508;
+      color: #ffffff;
+      overflow: hidden;
+    }
+
+    /* Ambient Blur Background */
+    .bg-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=1600&auto=format&fit=crop');
+      background-size: cover;
+      background-position: center;
+      filter: blur(20px) brightness(0.25);
+      transform: scale(1.1);
+      z-index: 1;
+    }
+
+    /* Radial Vignette Overlay */
+    .overlay-vignette {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center, rgba(15, 15, 25, 0.2) 0%, rgba(5, 5, 8, 0.95) 100%);
+      z-index: 2;
+    }
+
+    /* Canvas Elements */
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    /* Container for Falling Emojis */
+    #emojiContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 4;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .falling-emoji {
+      position: absolute;
+      top: -50px;
+      user-select: none;
+      animation: fall linear infinite;
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(105vh) rotate(360deg);
+        opacity: 0.2;
+      }
+    }
+
+    /* Foreground Stage */
+    .app-stage {
+      position: relative;
+      z-index: 5;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 50px 20px;
+    }
+
+    .header-tag {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: rgba(255, 215, 0, 0.9);
+      background: rgba(255, 215, 0, 0.05);
+      padding: 8px 20px;
+      border-radius: 20px;
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      backdrop-filter: blur(12px);
+      transition: opacity 1s ease, transform 1s ease;
+    }
+
+    .content-box {
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+      padding: 0 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 1s ease, transform 1s ease;
+    }
+
+    /* Golden Bordered Card */
+    .golden-card {
+      width: 100%;
+      max-width: 750px;
+      padding: 45px 35px;
+      border-radius: 24px;
+      background: rgba(15, 15, 20, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 2px solid transparent;
+      background-clip: padding-box, border-box;
+      background-origin: padding-box, border-box;
+      background-image: 
+        linear-gradient(135deg, rgba(20, 20, 28, 0.8), rgba(10, 10, 15, 0.9)), 
+        linear-gradient(135deg, #bf953f 0%, #fcf6ba 25%, #b38728 50%, #fbf5b7 75%, #aa771c 100%);
+      box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.7),
+        0 0 25px rgba(212, 175, 55, 0.15),
+        inset 0 0 15px rgba(212, 175, 55, 0.05);
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.6s ease;
+    }
+
+    /* Text Transitions */
+    .lyric-display {
+      font-size: 1.7rem;
+      line-height: 1.6;
+      font-weight: 400;
+      letter-spacing: 0.2px;
+      color: #fffdfa;
+      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+      opacity: 0;
+      transform: translateY(18px) scale(0.97);
+      transition: opacity 1.2s ease, transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .lyric-display.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Golden Final Header */
+    .golden-card.final-card {
+      background: rgba(20, 18, 12, 0.85);
+      border-width: 3px;
+      box-shadow: 
+        0 25px 60px rgba(0, 0, 0, 0.9),
+        0 0 45px rgba(212, 175, 55, 0.4),
+        inset 0 0 25px rgba(212, 175, 55, 0.2);
+    }
+
+    .lyric-display.final-header {
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 30%, #b38728 60%, #fbf5b7 80%, #aa771c 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0px 8px 25px rgba(212, 175, 55, 0.4));
+      line-height: 1.3;
+    }
+
+    /* Controls */
+    .control-box {
+      width: 100%;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      transition: opacity 1s ease, transform 1s ease;
+    }
+
+    .surprise-btn {
+      width: 100%;
+      padding: 16px 28px;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 50%, #b38728 100%);
+      border: none;
+      color: #0d0d12;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(212, 175, 55, 0.3);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .surprise-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 14px 30px rgba(212, 175, 55, 0.45);
+    }
+
+    .progress-container {
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: #fcf6ba;
+      border-radius: 3px;
+      transition: width 0.1s linear;
+    }
+
+    /* 10-Question Quiz Section */
+    .quiz-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -45%);
+      width: 90%;
+      max-width: 650px;
+      background: rgba(15, 15, 22, 0.88);
+      border-radius: 28px;
+      padding: 35px 30px;
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 2px solid rgba(212, 175, 55, 0.4);
+      box-shadow: 0 25px 60px rgba(0,0,0,0.85), 0 0 35px rgba(212, 175, 55, 0.25);
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 10;
+    }
+
+    .quiz-container.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%);
+    }
+
+    .quiz-header {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fcf6ba;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .quiz-question {
+      font-size: 1.2rem;
+      line-height: 1.5;
+      margin-bottom: 22px;
+      color: #ffffff;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .option-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 215, 0, 0.25);
+      padding: 14px 16px;
+      border-radius: 16px;
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .option-btn:hover {
+      background: rgba(255, 215, 0, 0.15);
+      border-color: rgba(255, 215, 0, 0.6);
+      transform: translateY(-2px);
+    }
+
+    .option-btn.correct {
+      background: rgba(46, 204, 113, 0.35) !important;
+      border-color: #2ecc71 !important;
+      color: #ffffff;
+    }
+
+    .option-btn.wrong {
+      background: rgba(231, 76, 60, 0.35) !important;
+      border-color: #e74c3c !important;
+      color: #ffffff;
+    }
+
+    .quiz-footer {
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 5px;
+    }
+
+    .final-score-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 50%, #b38728 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .final-score-val {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+      color: #ffffff;
+    }
+
+    .end-btn {
+      padding: 12px 32px;
+      border-radius: 40px;
+      background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 50%, #b38728 100%);
+      border: none;
+      color: #050508;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: transform 0.25s ease;
+    }
+
+    .end-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .fade-out {
+      opacity: 0 !important;
+      transform: translateY(-20px) !important;
+      pointer-events: none !important;
+    }
+
+    @media (max-width: 600px) {
+      .golden-card {
+        padding: 30px 20px;
+        min-height: 160px;
+      }
+      .lyric-display {
+        font-size: 1.25rem;
+      }
+      .lyric-display.final-header {
+        font-size: 2rem;
+        letter-spacing: 1.5px;
+      }
+      .options-grid {
+        grid-template-columns: 1fr;
+      }
+      .quiz-container {
+        padding: 25px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-container"></div>
+  <div class="overlay-vignette"></div>
+  <canvas id="particleCanvas"></canvas>
+  <div id="emojiContainer"></div>
+
+  <div class="app-stage">
+    <div id="headerTag" class="header-tag">A Special Note of Gratitude</div>
+
+    <div id="contentBox" class="content-box">
+      <div id="goldenCard" class="golden-card">
+        <p id="lyricText" class="lyric-display">Click below to see our message for you...</p>
+      </div>
+    </div>
+
+    <div id="controlBox" class="control-box">
+      <button id="surpriseBtn" class="surprise-btn">Click Here to See the Surprise</button>
+      <div id="progressContainer" class="progress-container">
+        <div id="progressBar" class="progress-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 10-Question Interactive Quiz Modal -->
+  <div id="quizContainer" class="quiz-container">
+    <div class="quiz-header">💡 Funny GK Challenge</div>
+    <div id="quizBody">
+      <div id="quizQuestion" class="quiz-question">Loading Question...</div>
+      <div id="optionsGrid" class="options-grid"></div>
+      <div id="quizFooter" class="quiz-footer">Question 1 of 10</div>
+    </div>
+  </div>
+
+  <audio id="audioTrack" src="paulyudin-emotional-emotional-music-573976.mp3" preload="auto"></audio>
+
+  <script>
+    const audio = document.getElementById('audioTrack');
+    const surpriseBtn = document.getElementById('surpriseBtn');
+    const lyricText = document.getElementById('lyricText');
+    const goldenCard = document.getElementById('goldenCard');
+    const progressBar = document.getElementById('progressBar');
+    const progressContainer = document.getElementById('progressContainer');
+    const emojiContainer = document.getElementById('emojiContainer');
+    const contentBox = document.getElementById('contentBox');
+    const controlBox = document.getElementById('controlBox');
+    const headerTag = document.getElementById('headerTag');
+    const quizContainer = document.getElementById('quizContainer');
+
+    // Sequential timeline setup
+    const scriptData = [
+      { percent: 0.02, text: "Dear Teacher, thank you for guiding us every step of the way...", isFinal: false },
+      { percent: 0.12, text: "Your patience and kindness have made learning a wonderful experience for us.", isFinal: false },
+      { percent: 0.22, text: "For every concept you simplified and every doubt you patiently cleared...", isFinal: false },
+      { percent: 0.32, text: "Whenever we faced difficulties, your constant support gave us confidence.", isFinal: false },
+      { percent: 0.42, text: "Thank you for believing in us, even when we doubted our own potential.", isFinal: false },
+      { percent: 0.52, text: "You have taught us lessons that extend far beyond the textbook.", isFinal: false },
+      { percent: 0.62, text: "Your effort and dedication inspire us to strive for excellence every single day.", isFinal: false },
+      { percent: 0.72, text: "We are truly grateful for every bit of care and wisdom you share with us.", isFinal: false },
+      { percent: 0.82, text: "From all of us, thank you for being an extraordinary mentor and guide...", isFinal: false },
+      { percent: 0.93, text: "HAPPY TEACHER'S DAY! 🌟💐", isFinal: true }
+    ];
+
+    let activeIdx = -1;
+    let emojiInterval = null;
+    let quizLaunched = false;
+
+    /* Falling Emojis Logic */
+    const emojis = ['💐', '⭐', '✨', '📚', '🎓', '🎁', '🌸', '✨'];
+    function createEmoji() {
+      const emojiEl = document.createElement('div');
+      emojiEl.classList.add('falling-emoji');
+      emojiEl.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      emojiEl.style.left = Math.random() * 100 + 'vw';
+      emojiEl.style.fontSize = (Math.random() * 20 + 20) + 'px';
+      
+      const duration = Math.random() * 5 + 5; 
+      emojiEl.style.animationDuration = duration + 's';
+
+      emojiContainer.appendChild(emojiEl);
+      setTimeout(() => emojiEl.remove(), duration * 1000);
+    }
+
+    function startFallingEmojis() {
+      if (!emojiInterval) {
+        emojiInterval = setInterval(createEmoji, 350);
+      }
+    }
+
+    function stopFallingEmojis() {
+      if (emojiInterval) {
+        clearInterval(emojiInterval);
+        emojiInterval = null;
+        emojiContainer.innerHTML = '';
+      }
+    }
+
+    /* Controls */
+    surpriseBtn.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play().then(() => {
+          surpriseBtn.textContent = "Pause Experience";
+        }).catch(err => console.error("Playback error:", err));
+      } else {
+        audio.pause();
+        surpriseBtn.textContent = "Click Here to Resume";
+      }
+    });
+
+    /* Sync Lyrics */
+    audio.addEventListener('timeupdate', () => {
+      const cur = audio.currentTime;
+      const dur = audio.duration || 1;
+      const currentPercent = cur / dur;
+      
+      progressBar.style.width = `${(currentPercent) * 100}%`;
+
+      let found = -1;
+      for (let i = 0; i < scriptData.length; i++) {
+        if (currentPercent >= scriptData[i].percent) found = i;
+      }
+
+      if (found !== activeIdx && found !== -1) {
+        activeIdx = found;
+        lyricText.classList.remove('visible');
+        
+        setTimeout(() => {
+          lyricText.textContent = scriptData[activeIdx].text;
+          
+          if (scriptData[activeIdx].isFinal) {
+            lyricText.classList.add('final-header');
+            goldenCard.classList.add('final-card');
+            startFallingEmojis();
+          } else {
+            lyricText.classList.remove('final-header');
+            goldenCard.classList.remove('final-card');
+            stopFallingEmojis();
+          }
+          
+          lyricText.classList.add('visible');
+        }, 500);
+      }
+    });
+
+    /* Automatic Fade Out & Quiz Launch when Audio Ends */
+    audio.addEventListener('ended', () => {
+      if (!quizLaunched) {
+        quizLaunched = true;
+        
+        setTimeout(() => {
+          contentBox.classList.add('fade-out');
+          controlBox.classList.add('fade-out');
+          headerTag.classList.add('fade-out');
+
+          setTimeout(() => {
+            initQuiz();
+            quizContainer.classList.add('active');
+          }, 1000);
+        }, 2000);
+      }
+    });
+
+    /* Scrubbing Support */
+    progressContainer.addEventListener('click', (e) => {
+      const rect = progressContainer.getBoundingClientRect();
+      const pos = (e.clientX - rect.left) / rect.width;
+      if (audio.duration) audio.currentTime = pos * audio.duration;
+    });
+
+    /* 10 Funny GK Questions Data */
+    const quizQuestions = [
+      {
+        q: "What turns everything around, but cannot move itself?",
+        options: ["A mirror", "A clock", "A teacher's gaze", "A compass"],
+        answer: 0
+      },
+      {
+        q: "Which element is found abundantly in school, but absent from periodic tables?",
+        options: ["Surprise Tests", "Homeworkium", "Chalkdust", "Coffee"],
+        answer: 1
+      },
+      {
+        q: "What has a head and a tail, but no body?",
+        options: ["A coin", "A snake", "A needle", "A pencil"],
+        answer: 0
+      },
+      {
+        q: "Why did the student eat his homework?",
+        options: ["It was sweet", "Teacher said it was a piece of cake", "He lost his lunch", "For science"],
+        answer: 1
+      },
+      {
+        q: "What has many keys, but cannot open a single lock?",
+        options: ["A map", "A piano", "A lockbox", "A skeleton"],
+        answer: 1
+      },
+      {
+        q: "Which building has the most stories in the entire world?",
+        options: ["Burj Khalifa", "The Library", "School Auditorium", "Empire State"],
+        answer: 1
+      },
+      {
+        q: "What gets wetter the more it dries?",
+        options: ["A sponge", "A towel", "A cloud", "Raincoat"],
+        answer: 1
+      },
+      {
+        q: "Why can't your nose be 12 inches long?",
+        options: ["It would smell bad", "Because then it would be a foot!", "Not enough space", "Physics rules"],
+        answer: 1
+      },
+      {
+        q: "What goes up but never comes down?",
+        options: ["Your age", "A balloon", "A kite", "The sun"],
+        answer: 0
+      },
+      {
+        q: "What kind of room has no doors or windows?",
+        options: ["A vault", "A mushroom", "A cave", "A submarine"],
+        answer: 1
+      }
+    ];
+
+    let currentQIdx = 0;
+    let userScore = 0;
+
+    function initQuiz() {
+      currentQIdx = 0;
+      userScore = 0;
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const qData = quizQuestions[currentQIdx];
+      const quizBody = document.getElementById('quizBody');
+      
+      quizBody.innerHTML = `
+        <div class="quiz-question">${qData.q}</div>
+        <div class="options-grid" id="optionsGrid"></div>
+        <div class="quiz-footer">Question ${currentQIdx + 1} of ${quizQuestions.length}</div>
+      `;
+
+      const grid = document.getElementById('optionsGrid');
+      qData.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = opt;
+        btn.onclick = () => selectOption(idx, btn);
+        grid.appendChild(btn);
+      });
+    }
+
+    function selectOption(selectedIdx, btnEl) {
+      const correctIdx = quizQuestions[currentQIdx].answer;
+      const buttons = document.querySelectorAll('.option-btn');
+      buttons.forEach(b => b.style.pointerEvents = 'none');
+
+      if (selectedIdx === correctIdx) {
+        btnEl.classList.add('correct');
+        userScore++;
+      } else {
+        btnEl.classList.add('wrong');
+        buttons[correctIdx].classList.add('correct');
+      }
+
+      setTimeout(() => {
+        currentQIdx++;
+        if (currentQIdx < quizQuestions.length) {
+          renderQuestion();
+        } else {
+          showFinalScore();
+        }
+      }, 1100);
+    }
+
+    function showFinalScore() {
+      const quizBody = document.getElementById('quizBody');
+      let customRemark = "Great Effort!";
+      if (userScore === 10) customRemark = "Perfect Score! Absolute Legend! 🏆";
+      else if (userScore >= 7) customRemark = "Brilliant Mind! 👏";
+      else if (userScore >= 4) customRemark = "Good Job! 😊";
+
+      quizBody.innerHTML = `
+        <div class="final-score-title">Quiz Completed!</div>
+        <div class="final-score-val">Final Score: <strong>${userScore} / ${quizQuestions.length}</strong></div>
+        <p style="color: rgba(255,255,255,0.85); margin-bottom: 25px; font-size: 1.05rem;">${customRemark}</p>
+        <button class="end-btn" onclick="closeProgramme()">End Programme 🏁</button>
+      `;
+    }
+
+    function closeProgramme() {
+      quizContainer.classList.remove('active');
+      stopFallingEmojis();
+      setTimeout(() => {
+        document.body.innerHTML = `
+          <div style="height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; background:#050508; color:#ffffff; font-family:'Plus Jakarta Sans', sans-serif;">
+            <h1 style="font-size: 2.5rem; background: linear-gradient(135deg, #bf953f 0%, #fcf6ba 50%, #b38728 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Thank You!</h1>
+            <p style="color: rgba(255,255,255,0.6); margin-top: 10px; font-size: 1.1rem;">Programme ended.</p>
+          </div>
+        `;
+      }, 800);
+    }
+
+    /* Ambient Dust Canvas */
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    class Particle {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 1.5 + 0.5;
+        this.speedY = -(Math.random() * 0.25 + 0.08);
+        this.opacity = Math.random() * 0.5 + 0.2;
+      }
+      update() {
+        this.y += this.speedY;
+        if (this.y < 0) this.reset();
+      }
+      draw() {
+        ctx.fillStyle = `rgba(255, 215, 0, ${this.opacity * 0.7})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    for (let i = 0; i < 40; i++) particles.push(new Particle());
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => { p.update(); p.draw(); });
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+  </script>
+</body>
+</html>
